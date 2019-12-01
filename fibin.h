@@ -37,7 +37,6 @@ public:
         std::cout << C::val;
     }
 
-
 };
 
 using True = Fibin<bool>::Fib<true>;
