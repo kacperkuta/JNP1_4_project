@@ -5,7 +5,8 @@
 #ifndef JNP1_4_PROJECT_FIBIN_H
 #define JNP1_4_PROJECT_FIBIN_H
 
-
+using namespace std;
+#include<initializer_list>
 
 
 template<typename T>
@@ -36,6 +37,22 @@ public:
     static void print() {
         std::cout << C::val;
     }
+
+
+    template<typename ... Args>
+    struct Sum {
+         static const T val = (... + Args::val);
+    };
+
+    template<typename Arg>
+    struct Inc1 {
+        static const T val = Arg::val + Fib<1>::val;
+    };
+
+    template<typename Arg>
+    struct Inc10 {
+        static const T val = Arg::val + Fib<10>::val;
+    };
 
 };
 
