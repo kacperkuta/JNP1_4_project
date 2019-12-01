@@ -3,4 +3,4 @@ project(JNP1_4_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(JNP1_4_project main.cpp)
+add_executable(JNP1_4_project main.cpp fibin.h)

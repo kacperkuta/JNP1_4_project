@@ -1,6 +1,9 @@
 #include <iostream>
+#include "fibin.h"
+#include <cassert>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    Fibin<int>::print<Fibin<int>::Lit<Fibin<int>::Fib<13>>>();
 }
+
+
