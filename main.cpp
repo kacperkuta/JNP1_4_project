@@ -3,7 +3,7 @@
 #include <cassert>
 
 int main() {
-    Fibin<int>::print<Fibin<int>::Lit<Fibin<int>::Fib<13>>>();
+    Fibin<int>::print<Fibin<int>::Fib<4>>();
 }
 
 

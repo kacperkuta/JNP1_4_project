@@ -5,10 +5,6 @@
 #ifndef JNP1_4_PROJECT_FIBIN_H
 #define JNP1_4_PROJECT_FIBIN_H
 
-bool True = true;
-bool False = false;
-
-
 
 
 
@@ -31,19 +27,9 @@ public:
         const static T val = 1;
     };
 
-    template<class Fib, bool b = true, typename = void>
+    template<class Fib>
     struct Lit {
         const static T val = Fib::val;
-    };
-
-    template<typename fake>
-    struct Lit<T, true, fake> {
-        const static bool val = true;
-    };
-
-    template<typename fake>
-    struct Lit<T, false, fake> {
-        const static bool val = false;
     };
 
     template<class C>
@@ -53,6 +39,10 @@ public:
 
 
 };
+
+using True = Fibin<bool>::Fib<true>;
+using False = Fibin<bool>::Fib<false>;
+
 
 
 #endif //JNP1_4_PROJECT_FIBIN_H
