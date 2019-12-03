@@ -1,6 +1,5 @@
-//
-// Created by baka475 on 30.11.19.
-//
+//Fibin - functional programming language
+//Created by Kacper Kuta and Bartosz Wałachowski
 
 #ifndef JNP1_4_PROJECT_FIBIN_H
 #define JNP1_4_PROJECT_FIBIN_H
@@ -163,7 +162,11 @@ struct Eval<Eq<Lit<Fib<v1>>, Lit<Fib<v1>>>, Env> {
 
 template <typename Arg1, typename Arg2,  typename Env>
 struct Eval<Eq<Arg1, Arg2>, Env> {
-    typedef typename Eval<Eq<Lit<typename Eval<Arg1, Env>::result>, Lit<typename Eval<Arg2, Env>::result>>, Env>::result result;
+    typedef typename Eval<Eq<
+            Lit<typename Eval<Arg1, Env>::result>,
+            Lit<typename Eval<Arg2, Env>::result>
+            >,
+            Env>::result result;
 };
 
 //If condition
@@ -179,18 +182,24 @@ struct Eval<If<False, Then, Else>, Env> {
 
 template <typename Cond, typename Then, typename Else, typename Env>
 struct Eval<If<Cond, Then, Else>, Env> {
-    typedef typename Eval<If<typename Eval<Cond, Env>::result, Then, Else>, Env> :: result result;
+    typedef typename Eval<If<
+            typename Eval<Cond, Env>::result,
+            Then, Else>, Env>::result result;
 };
 
 //Sum
 template <typename Arg1, typename Arg2, typename ... Args, typename Env>
 struct Eval<Sum<Arg1, Arg2, Args...>, Env> {
-    typedef typename Eval<Sum<Arg1, typename Eval<Sum<Arg2, Args...>, Env>::result>, Env>::result result;
+    typedef typename Eval<Sum<
+            Arg1, typename Eval<Sum<Arg2, Args...>, Env>::result>,
+            Env>::result result;
 };
 
 template <typename Arg1, typename Arg2, typename Env>
 struct Eval<Sum<Arg1, Arg2>, Env> {
-    typedef Result<Eval<Arg1, Env>::result::val + Eval<Arg2, Env>::result::val> result;
+    typedef Result<
+            Eval<Arg1, Env>::result::val + Eval<Arg2, Env>::result::val
+            > result;
 };
 
 //Inc1, Inc10
@@ -208,7 +217,8 @@ struct Eval<Inc10<Arg>, Env> {
 //References
 template <uint64_t name, typename Env>
 struct Eval<Ref<name>, Env> {
-    typedef typename Eval<typename EnvLookup<name, Env>::result, Env>::result result;
+    typedef typename Eval<typename EnvLookup<name, Env>::result,
+            Env>::result result;
 };
 
 //Lambda expressions
@@ -220,13 +230,21 @@ struct Eval<Lambda<name, Body>, Env> {
 //Invoke
 template <typename Fun, typename Arg, typename Env>
 struct Eval<Invoke<Fun, Arg> , Env> {
-    typedef typename Apply<typename Eval<Fun, Env>::result , Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
+    typedef typename Apply<
+            typename Eval<Fun, Env>::result,
+            Env,
+            Lit<typename Eval<Arg, Env>::result>
+            >::result result;
 };
 
 //Invoke for Lambda variables
 template <uint64_t arg, typename Arg, typename Env>
 struct Eval<Invoke<Ref<arg>, Arg> , Env> {
-    typedef typename Apply<typename EnvLookup<arg, Env>::result, Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
+    typedef typename Apply<
+            typename EnvLookup<arg, Env>::result,
+            Env,
+            Lit<typename Eval<Arg, Env>::result>
+            >::result result ;
 };
 
 //Application of Lambda
@@ -245,12 +263,14 @@ template<typename T>
 class Fibin {
 public:
 
-    template <typename Expr, typename U = T, typename = typename std::enable_if<std::is_integral<U>::value>::type>
+    template <typename Expr, typename U = T,
+            typename = typename std::enable_if_t<std::is_integral<U>::value>>
     static constexpr T eval() {
         return (T)Eval<Expr, EmptyEnv> :: result :: val;
     }
 
-    template <typename Expr, typename U = T, typename = typename std::enable_if<!std::is_integral<U>::value>::type>
+    template <typename Expr, typename U = T,
+            typename = typename std::enable_if_t<!std::is_integral<U>::value>>
     static constexpr void eval() {
         std::cout << "Fibin doesn't support: " << typeid(U).name() << std::endl;
     }
