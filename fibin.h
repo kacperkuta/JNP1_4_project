@@ -5,6 +5,44 @@
 #ifndef JNP1_4_PROJECT_FIBIN_H
 #define JNP1_4_PROJECT_FIBIN_H
 
+#include <cstdint>
+
+constexpr int length(const char* key) {
+    int l = 0;
+    for(int i = 0; key[i] != '\0'; ++i) {
+        ++l;
+    }
+    return l;
+}
+
+constexpr int64_t Var(const char* key) {
+    int l = length(key);
+
+    if(l == 0 || l > 6) {
+        throw "wrong identifier length!";
+    }
+
+    int64_t hashed = 0;
+    int64_t multiplier = 1;
+
+    for(int i = 0; i < l; ++i) {
+        if(key[i] >= 'A' && key[i] <= 'Z') {
+            hashed += key[i] * multiplier;
+        }
+        else if(key[i] >= '0' && key[i] <= '9') {
+            hashed += key[i] * multiplier;
+        }
+        else if(key[i] >= 'a' && key[i] <= 'z') {
+            hashed += (key[i] - ('a' - 'A')) * multiplier;
+        }
+        else {
+            throw "sign not permitted!";
+        }
+        multiplier *= 100;
+    }
+
+    return hashed;
+}
 
 template<typename T>
 class Fibin {
@@ -56,10 +94,10 @@ public:
     template <typename Arg>
     struct Inc10 {};
 
-    template <T name>
+    template <int64_t name>
     struct Ref {};
 
-    template <T name, typename Body>
+    template <int64_t name, typename Body>
     struct Lambda {};
 
     template <typename Fun, typename Arg>
@@ -75,22 +113,22 @@ public:
     //Enviroments and binding const char* id with literal value
     struct EmptyEnv;
 
-    template <T name, typename Value, typename Env>
+    template <int64_t name, typename Value, typename Env>
     struct Binding {};
 
-    template <T name, typename Env>
+    template <int64_t name, typename Env>
     struct EnvLookup {};
 
-    template <T name>
+    template <int64_t name>
     struct EnvLookup <name, EmptyEnv> {};
 
-    template <T name, typename Value, typename Env>
+    template <int64_t name, typename Value, typename Env>
     struct EnvLookup <name, Binding<name, Value, Env>>
     {
         Value typedef result;
     };
 
-    template <int name, int name2, typename Value2, typename Env>
+    template <int64_t name, int64_t name2, typename Value2, typename Env>
     struct EnvLookup <name, Binding<name2,Value2,Env> >
     {
         typename EnvLookup<name,Env> :: result typedef result ;
@@ -173,7 +211,7 @@ public:
     };
 
     //References
-    template <T name, typename Env>
+    template <int64_t name, typename Env>
     struct Eval<Ref<name>, Env> {
         typedef typename Eval<typename EnvLookup<name, Env>::result, Env>::result result;
     };
@@ -181,7 +219,7 @@ public:
     //Lambda expressions
 
     //this one seems to be redundant
-    template <T name, typename Body, typename Env>
+    template <int64_t name, typename Body, typename Env>
     struct Eval<Lambda<name, Body>, Env> {
 
     };
@@ -191,12 +229,12 @@ public:
         typedef typename Apply<Fun, Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
     };
 
-    template <int name, typename Body, typename Env, typename Value>
+    template <int64_t name, typename Body, typename Env, typename Value>
     struct Apply<Lambda<name, Body>, Env, Value> {
         typedef typename Eval<Body, Binding<name, Value, Env>>::result result ;
     };
 
-    template <int name, typename Val, typename Expr, typename Env>
+    template <int64_t name, typename Val, typename Expr, typename Env>
     struct Eval<Let<name, Val, Expr>, Env> {
         typedef typename Eval<Expr, Binding<name, Val, Env>>::result result;
     };
