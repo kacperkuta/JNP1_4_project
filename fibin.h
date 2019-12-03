@@ -38,7 +38,7 @@ public:
 
     template <T v>
     struct Result {
-        T val = v;
+        static constexpr T val = v;
     };
 
     template <typename Arg1, typename Arg2>
@@ -50,32 +50,52 @@ public:
     template <typename Arg1, typename Arg2, typename ... Args>
     struct Sum {};
 
+    template <typename Arg>
+    struct Inc1 {};
 
+    template <typename Arg>
+    struct Inc10 {};
+
+    template <T name>
+    struct Ref {};
+
+    template <T name, typename Body>
+    struct Lambda {};
+
+    template <typename Fun, typename Arg>
+    struct Invoke {};
+
+    template <typename Body, typename Env, typename Val>
+    struct Apply {};
+
+    template <T var, typename Val, typename Expr>
+    struct Let {};
+    
 
     //Enviroments and binding const char* id with literal value
     struct EmptyEnv;
 
-    template <int Name, typename Value, typename Env>
+    template <T name, typename Value, typename Env>
     struct Binding {};
 
-    template <int Name, typename Env>
+    template <T name, typename Env>
     struct EnvLookup {};
 
-    template <int Name>
-    struct EnvLookup <Name,EmptyEnv> {}; // Name not found.
+    template <T name>
+    struct EnvLookup <name, EmptyEnv> {};
 
-    template <int Name, typename Value, typename Env>
-    struct EnvLookup <Name, Binding<Name, Value, Env>>
+    template <T name, typename Value, typename Env>
+    struct EnvLookup <name, Binding<name, Value, Env>>
     {
         Value typedef result;
     };
-/*
-    template <int Name, int Name2, typename Value2, typename Env>
-    struct EnvLookup <Name, Binding<Name2,Value2,Env> >
+
+    template <int name, int name2, typename Value2, typename Env>
+    struct EnvLookup <name, Binding<name2,Value2,Env> >
     {
-        typename EnvLookup<Name,Env> :: result typedef result ;
+        typename EnvLookup<name,Env> :: result typedef result ;
     } ;
-*/
+
 
 //Evaluations
 
@@ -97,16 +117,20 @@ public:
     struct Eval<Eq<Arg1, Arg1>, Env> {
         typedef True result;
     };
-
-    //TODO: consider typer of v1, v2 - e.g. uint64_t doesn't work
-    template <T v1, T v2, typename Env>
-    struct Eval<Eq<Fib<v1>, Fib<v2>>, Env> {
+    //TODO: consider types of v1, v2 - e.g. uint64_t doesn't work
+    template <int v1, int v2, typename Env>
+    struct Eval<Eq<Lit<Fib<v1>>, Lit<Fib<v2>>>, Env> {
         typedef False result;
+    };
+
+    template <int v1, typename Env>
+    struct Eval<Eq<Lit<Fib<v1>>, Lit<Fib<v1>>>, Env> {
+        typedef True result;
     };
 
     template <typename Arg1, typename Arg2,  typename Env>
     struct Eval<Eq<Arg1, Arg2>, Env> {
-        typedef typename Eval<Eq<typename Eval<Arg1, Env>::result, typename Eval<Arg2, Env>::result>, Env>::result result;
+        typedef typename Eval<Eq<Lit<typename Eval<Arg1, Env>::result>, Lit<typename Eval<Arg2, Env>::result>>, Env>::result result;
     };
 
     //If condition
@@ -131,12 +155,51 @@ public:
         typedef typename Eval<Sum<Arg1, typename Eval<Sum<Arg2, Args...>, Env>::result>, Env>::result result;
     };
 
+    //Inc1, Inc10
+    template <typename Arg, typename Env>
+    struct Eval<Inc1<Arg>, Env> {
+        typedef typename Eval<Sum<Arg, Lit<Fib<1>>>, Env>::result result;
+    };
+
+    template <typename Arg, typename Env>
+    struct Eval<Inc10<Arg>, Env> {
+        typedef typename Eval<Sum<Arg, Lit<Fib<10>>>, Env>::result result;
+    };
+
 
     template <typename Arg1, typename Arg2, typename Env>
     struct Eval<Sum<Arg1, Arg2>, Env> {
         typedef Result<Eval<Arg1, Env>::result::val + Eval<Arg2, Env>::result::val> result;
     };
 
+    //References
+    template <T name, typename Env>
+    struct Eval<Ref<name>, Env> {
+        typedef typename Eval<typename EnvLookup<name, Env>::result, Env>::result result;
+    };
+
+    //Lambda expressions
+
+    //this one seems to be redundant
+    template <T name, typename Body, typename Env>
+    struct Eval<Lambda<name, Body>, Env> {
+
+    };
+
+    template <typename Fun, typename Arg, typename Env>
+    struct Eval<Invoke<Fun, Arg> , Env> {
+        typedef typename Apply<Fun, Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
+    };
+
+    template <int name, typename Body, typename Env, typename Value>
+    struct Apply<Lambda<name, Body>, Env, Value> {
+        typedef typename Eval<Body, Binding<name, Value, Env>>::result result ;
+    };
+
+    template <int name, typename Val, typename Expr, typename Env>
+    struct Eval<Let<name, Val, Expr>, Env> {
+        typedef typename Eval<Expr, Binding<name, Val, Env>>::result result;
+    };
 
 
 };
