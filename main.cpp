@@ -5,7 +5,11 @@
 
 int  main() {
 
-    //typedef Lambda < 1, Sum<Ref<1>, Lit<Fib<13>>> > Fun;
 
-    //std::cout << Eval< Let<1, Lit<Fib<7>>, Sum< Inc10<Ref<1>>, Lit<Fib<5>>, Ref<1>>>, EmptyEnv   >::result::val;
+    //Fibin<const char*>::eval< Let<Var("x"), Lit<Fib<14>>, Sum<Ref<Var("x")>, Lit<Fib<1>>>>>  ();
+
+
+
+    std::cout << Fibin<int>::eval<Let<Var("f"), Lambda< Var("x"), Inc1<Ref<Var("x")>>>, Invoke<Ref<Var("f")>, Lit<Fib<0>>>>>();
+
 }
