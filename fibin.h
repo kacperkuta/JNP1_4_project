@@ -128,11 +128,10 @@ struct EnvLookup <name, Binding<name, Value, Env>> {
 template <uint64_t name, uint64_t name2, typename Value2, typename Env>
 struct EnvLookup <name, Binding<name2, Value2, Env>> {
     typename EnvLookup<name, Env> :: result typedef result ;
-} ;
+};
 
 
 //Evaluations
-
 template <typename Arg, typename Env>
 struct Eval {};
 
@@ -213,23 +212,30 @@ struct Eval<Ref<name>, Env> {
 };
 
 //Lambda expressions
-
-//this one seems to be redundant
 template <uint64_t name, typename Body, typename Env>
 struct Eval<Lambda<name, Body>, Env> {
-
+    typedef Lambda<name, Body> result;
 };
 
+//Invoke
 template <typename Fun, typename Arg, typename Env>
 struct Eval<Invoke<Fun, Arg> , Env> {
-    typedef typename Apply<Fun, Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
+    typedef typename Apply<typename Eval<Fun, Env>::result , Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
 };
 
-template <uint64_t name, typename Body, typename Env, typename Value>
-struct Apply<Lambda<name, Body>, Env, Value> {
-    typedef typename Eval<Body, Binding<name, Value, Env>>::result result ;
+//Invoke for Lambda variables
+template <uint64_t arg, typename Arg, typename Env>
+struct Eval<Invoke<Ref<arg>, Arg> , Env> {
+    typedef typename Apply<typename EnvLookup<arg, Env>::result, Env, Lit<typename Eval<Arg, Env>::result>>::result result ;
 };
 
+//Application of Lambda
+template <uint64_t name, typename Body, typename Env, typename Val>
+struct Apply<Lambda<name, Body>, Env, Val> {
+    typedef typename Eval<Body, Binding<name, Val, Env>>::result result ;
+};
+
+//Let
 template <uint64_t name, typename Val, typename Expr, typename Env>
 struct Eval<Let<name, Val, Expr>, Env> {
     typedef typename Eval<Expr, Binding<name, Val, Env>>::result result;
@@ -246,7 +252,7 @@ public:
 
     template <typename Expr, typename U = T, typename = typename std::enable_if<!std::is_integral<U>::value>::type>
     static constexpr void eval() {
-        std::cout << "Fibin doesn't support: " << typeid(U).name();
+        std::cout << "Fibin doesn't support: " << typeid(U).name() << std::endl;
     }
 
 };
