@@ -15,10 +15,10 @@ constexpr uint64_t length(const char* key) {
     return l;
 }
 
-constexpr uint64_t  Var(const char* key) {
+constexpr uint64_t Var(const char* key) {
     uint64_t l = length(key);
 
-    if(l == 0 || l > 6) {
+    if (l == 0 || l > 6) {
         throw "wrong identifier length!";
     }
 
@@ -62,13 +62,14 @@ struct Fib<1> {
 
 template<typename V>
 struct Lit {
+    constexpr static uint64_t val = V::val;
 };
 
 struct True {
-    constexpr static bool val = true;
+    //constexpr static bool val = true;
 };
 struct False {
-    constexpr static bool val = false;
+    //constexpr static bool val = false;
 };
 
 template <uint64_t v>
@@ -106,11 +107,14 @@ struct Apply {};
 template <uint64_t var, typename Val, typename Expr>
 struct Let {};
 
+template <uint64_t v1, uint64_t v2>
+struct NumberEq {};
+
 
 //Enviroments and binding const char* id with literal value
 struct EmptyEnv;
 
-template <uint64_t name, typename Value, typename Env>
+template <uint64_t name, typename Value, typename LocEnv, typename Env>
 struct Binding {};
 
 template <uint64_t name, typename Env>
@@ -119,14 +123,16 @@ struct EnvLookup {};
 template <uint64_t name>
 struct EnvLookup <name, EmptyEnv> {};
 
-template <uint64_t name, typename Value, typename Env>
-struct EnvLookup <name, Binding<name, Value, Env>> {
-    Value typedef result;
+template <uint64_t name, typename Value, typename LocEnv, typename Env>
+struct EnvLookup <name, Binding<name, Value, LocEnv, Env>> {
+    typedef Value result;
+    typedef LocEnv env;
 };
 
-template <uint64_t name, uint64_t name2, typename Value2, typename Env>
-struct EnvLookup <name, Binding<name2, Value2, Env>> {
-    typename EnvLookup<name, Env> :: result typedef result ;
+template <uint64_t name, uint64_t name2, typename Value2, typename Env, typename LocEnv>
+struct EnvLookup <name, Binding<name2, Value2, LocEnv, Env>> {
+    typedef typename EnvLookup<name, Env> :: result result;
+    typedef typename EnvLookup<name, Env> :: env env;
 };
 
 
@@ -134,9 +140,19 @@ struct EnvLookup <name, Binding<name2, Value2, Env>> {
 template <typename Arg, typename Env>
 struct Eval {};
 
+template <typename Env>
+struct Eval<True, Env> {
+    typedef True result;
+};
+
+template <typename Env>
+struct Eval<False, Env> {
+    typedef False result;
+};
+
 template <typename V, typename Env>
 struct Eval<Lit<V>, Env> {
-    typedef V result;
+    typedef Lit<V> result;
 };
 
 template <uint64_t v, typename Env>
@@ -145,38 +161,34 @@ struct Eval<Result<v>, Env> {
 };
 
 //Equals
-template <typename Arg1, typename Env>
-struct Eval<Eq<Arg1, Arg1>, Env> {
-    typedef True result;
-};
 
 template <uint64_t v1, uint64_t v2, typename Env>
-struct Eval<Eq<Lit<Fib<v1>>, Lit<Fib<v2>>>, Env> {
-    typedef False result;
+struct Eval<NumberEq<v1, v2>, Env> {
+    typedef Lit<False> result;
 };
 
-template <uint64_t v1, typename Env>
-struct Eval<Eq<Lit<Fib<v1>>, Lit<Fib<v1>>>, Env> {
-    typedef True result;
+template <uint64_t v1,  typename Env>
+struct Eval<NumberEq<v1, v1>, Env> {
+    typedef Lit<True> result;
 };
 
 template <typename Arg1, typename Arg2,  typename Env>
 struct Eval<Eq<Arg1, Arg2>, Env> {
-    typedef typename Eval<Eq<
-            Lit<typename Eval<Arg1, Env>::result>,
-            Lit<typename Eval<Arg2, Env>::result>
+    typedef typename Eval<NumberEq<
+            Eval<Arg1, Env>::result::val,
+            Eval<Arg2, Env>::result::val
             >,
             Env>::result result;
 };
 
 //If condition
 template <typename Then, typename Else, typename Env>
-struct Eval<If<True, Then, Else>, Env> {
+struct Eval<If<Lit<True>, Then, Else>, Env> {
     typename Eval<Then, Env>::result typedef result;
 };
 
 template <typename Then, typename Else, typename Env>
-struct Eval<If<False, Then, Else>, Env> {
+struct Eval<If<Lit<False>, Then, Else>, Env> {
     typedef typename Eval<Else, Env>::result result;
 };
 
@@ -233,8 +245,8 @@ struct Eval<Invoke<Fun, Arg> , Env> {
     typedef typename Apply<
             typename Eval<Fun, Env>::result,
             Env,
-            Lit<typename Eval<Arg, Env>::result>
-            >::result result;
+            typename Eval<Arg, Env>::result>
+            ::result result;
 };
 
 //Invoke for Lambda variables
@@ -242,21 +254,21 @@ template <uint64_t arg, typename Arg, typename Env>
 struct Eval<Invoke<Ref<arg>, Arg> , Env> {
     typedef typename Apply<
             typename EnvLookup<arg, Env>::result,
-            Env,
-            Lit<typename Eval<Arg, Env>::result>
-            >::result result ;
+            typename EnvLookup<arg, Env>::env,
+            typename Eval<Arg, Env>::result>
+            ::result result;
 };
 
 //Application of Lambda
 template <uint64_t name, typename Body, typename Env, typename Val>
 struct Apply<Lambda<name, Body>, Env, Val> {
-    typedef typename Eval<Body, Binding<name, Val, Env>>::result result ;
+    typedef typename Eval<Body, Binding<name, Val, Env, Env>>::result result;
 };
 
 //Let
 template <uint64_t name, typename Val, typename Expr, typename Env>
 struct Eval<Let<name, Val, Expr>, Env> {
-    typedef typename Eval<Expr, Binding<name, Val, Env>>::result result;
+    typedef typename Eval<Expr, Binding<name, typename Eval<Val, Env>::result, Env, Env>>::result result;
 };
 
 template<typename T>
