@@ -17,9 +17,7 @@ int main() {
                 >
         >
 
-
-
-    >() == 5);
+    >() == 5 );
 
 
     using f1 = Lambda<Var("x"), Inc10<Ref<Var("x")>>>;
@@ -38,5 +36,36 @@ int main() {
             >
     > () == 1);
 
+    static_assert(Fibin<uint64_t>::eval<
+            Invoke<
+                    Let<
+                            Var("x"),
+                            Lit<Fib<0>>,
+                            Lambda<Var("x"), Ref<Var("x")>>>,
+                    Lit<Fib<1>>>>() == 1);
+
+
+    static_assert(Fibin<int>::eval<Let<
+            Var("const"),
+            Lit<Fib<1>>,
+            Let<
+                    Var("f"),
+                    Lambda<
+                            Var("x"),
+                            Sum<
+                                    Ref<Var("const")>,
+                                    Ref<Var("x")>
+                                    >
+                            >,
+                            Let<
+                                    Var("const"),
+                                    Lit<Fib<3>>,
+                                    Invoke<
+                                            Ref<Var("f")>,
+                                            Lit<Fib<0>>
+                                    >
+                            >
+                    >
+            >>() == 1);
 
 }

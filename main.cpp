@@ -198,13 +198,13 @@ int main(){
 
 
     //std::cout << Fibin<int>::eval<SquareN<45>>();
-
+/*
     static_assert(
             Fibin<uint64_t>::eval<Invoke<
                     Invoke<Ycombinator, SquareN<45>>,
                     Lit<Fib<1>>
             >>() == 2025);
-/*
+
     static_assert(
             Fibin<uint64_t>::eval<Invoke<
                     Invoke<Ycombinator, SquareN<103>>,

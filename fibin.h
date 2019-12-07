@@ -66,10 +66,10 @@ struct Lit {
 };
 
 struct True {
-    //constexpr static bool val = true;
+    constexpr static bool val = true;
 };
 struct False {
-    //constexpr static bool val = false;
+    constexpr static bool val = false;
 };
 
 template <uint64_t v>
